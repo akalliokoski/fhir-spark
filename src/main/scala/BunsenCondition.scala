@@ -7,19 +7,19 @@ import org.apache.log4j._
 import org.apache.spark.api.java.function.MapFunction
 import org.hl7.fhir.dstu3.model.{Condition}
 
-abstract class BundleMapFunction extends MapFunction[String, Condition] {
+abstract class ConditionMapFunction extends MapFunction[String, Condition] {
   def call(bundleString: String): Condition
 }
 
-object BunsenTest {
+object BunsenCondition {
 
   val ctx = FhirContext.forDstu3()
 
   val encoders = FhirEncoders.forStu3.getOrCreate
 
-  val conditionMapFunction = new BundleMapFunction {
-    override def call(bundleString: String): Condition = {
-      return ctx.newJsonParser().parseResource(bundleString).asInstanceOf[Condition]
+  val conditionMapFunction = new ConditionMapFunction {
+    override def call(conditionString: String): Condition = {
+      return ctx.newJsonParser().parseResource(conditionString).asInstanceOf[Condition]
     }
   }
 
@@ -34,25 +34,23 @@ object BunsenTest {
       .master("local[*]")
       .getOrCreate()
 
-    // NOTE: "multiline" option for reading multiline JSON causes
-    // java.lang.IllegalAccessError: tried to access method com.google.common.base.Stopwatch.<init>()V from class org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-
     import spark.implicits._
 
-    val bundleJsonDf = spark
+    val conditionJsonDf = spark
       .read
-      //.option("multiLine", true)
+      .option("multiLine", true)
       .text("./data/test-condition.json")
       .as[String]
 
-    bundleJsonDf.show()
+    conditionJsonDf.show()
 
-    val bundleDf = bundleJsonDf.map(
+    val conditionDf = conditionJsonDf.map(
       conditionMapFunction,
       encoders.of(classOf[Condition])
     )
 
-    bundleDf.show()
+    conditionDf.printSchema()
+    conditionDf.show()
   }
 
 }
