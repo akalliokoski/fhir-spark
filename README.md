@@ -1,1 +1,1 @@
-Getting started with HL7 FHIR data using Scala, Spark and Bunsen
+Getting started with HL7 FHIR data using Apache Scala, Spark and Bunsen
